@@ -22,9 +22,9 @@ reset:
     jsr lcd_instruction
     lda #%00000110 ; increment and shift cursor, no scroll
     jsr lcd_instruction
-    lda #$00000001 ; clear screen
-    jsr lcd_instruction
+    jsr lcd_clear
 
+write:
     ldx #0
 write_1:
     lda message_1,x
@@ -35,8 +35,7 @@ write_1:
 
 write_2:    
     ldx #0
-    lda #%11000001 ; line2 pos1
-    jsr lcd_instruction
+    jsr lcd_line_2
 write_2_next:
     lda message_2,x
     beq loop
@@ -47,8 +46,8 @@ write_2_next:
 loop:
     jmp loop
 
-message_1: .asciiz '65C02'
-message_2: .asciiz ' Hello world!'
+message_1: .asciiz 'TLF:'
+message_2: .asciiz '  95555588'
 
 lcd_wait_ready:
     pha
@@ -91,6 +90,17 @@ lcd_write_char:
     lda #LCD_RS
     sta PORTA
     rts 
+
+
+lcd_line_2:
+    lda #%11000001 ; line2 pos1
+    jsr lcd_instruction
+    rts
+lcd_clear:
+    lda #$00000001 ; clear screen
+    jsr lcd_instruction
+    rts
+
 
 	.org $fffc
 	.word reset
