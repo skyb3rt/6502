@@ -6,7 +6,7 @@ blink:
 	lda #$55
 	sta $6000
 
-wait_button:    
+wait_button:
 	lda PORTA
     and #%00011111 ;# mask pa7-pa5
     cmp #%00011111
@@ -14,7 +14,7 @@ wait_button:
 	lda #$aa
 	sta $6000
 
-wait_button2:	
+wait_button2:
     lda PORTA
     and #%00011111 ;# mask pa7-pa5
     cmp #%00011111
