@@ -6,6 +6,13 @@ LCD_E  = %10000000
 LCD_RW = %01000000
 LCD_RS = %00100000
 
+;middle pa0
+;up pa1
+;down pa2
+;left pa3
+;right pa4
+button  = $0200 ; 1bytes
+output  = $0201
 
     .org $8000
 reset:
@@ -25,20 +32,66 @@ lcd:
     jsr lcd_instruction
     jsr lcd_clear       ; clear LCD
 
-write_lcd:
-    ldx #0
-write_next:
-    lda message, x
-    beq loop            ;branch on equal (zero set)
-    jsr lcd_write_char
-    inx
-    jmp write_next
-
 
 loop:
+    jsr read_port_a
+middle:
+    lda button
+    cmp #%00011110
+    bne up
+    lda #"M"
+    sta output
+    jsr lcd_write_output
+    jmp loop
+up:
+    lda button
+    cmp #%00011101
+    bne down
+    jsr lcd_clear
+    lda #"U"
+    jsr lcd_write_char
+    jmp loop
+down:
+    lda button
+    cmp #%00011011
+    bne left
+    jsr lcd_clear
+    lda #"D"
+    jsr lcd_write_char
+    jmp loop
+left:
+    lda button
+    cmp #%00010111
+    bne right
+    jsr lcd_clear
+    lda #"L"
+    jsr lcd_write_char
+    jmp loop
+right:
+    lda button
+    cmp #%00001111
+    bne loop
+    jsr lcd_clear
+    lda #"R"
+    jsr lcd_write_char
     jmp loop
 
-message: .asciiz "Hello, World!"     ; Null-terminated string
+
+read_port_a:
+    lda PORTA
+    and #%00011111 ;# mask pa7-pa5
+    cmp #%00011111
+    beq read_port_a
+    sta button
+wait:    
+    lda PORTA
+    and #%00011111 ;# mask pa7-pa5
+    cmp #%00011111
+    bne wait
+    rts
+
+
+
 
 
 lcd_instruction:
@@ -88,8 +141,25 @@ lcd_write_char:
     sta PORTA
     rts 
 
+lcd_write_output:
+    jsr lcd_clear
+    sta output
+    jsr lcd_wait_ready
+    sta PORTB
+    lda #LCD_RS             ; Set LCD_RS and clear LCD_RW and LCD_E bits
+    sta PORTA
+    lda #(LCD_RS | LCD_E)   ; set LCD_RS and LCD_E
+    sta PORTA
+    lda #LCD_RS             ; Set LCD_RS  clear LCD_E
+    sta PORTA
+    rts 
 
+nmi:
+    rti
+irq:
+    rti
 
-    .org $fffc
+    .org $fffa
+    .word nmi
 	.word reset
-	.word $0000
+	.word irq
